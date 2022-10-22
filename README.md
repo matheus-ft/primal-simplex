@@ -1,0 +1,2 @@
+# Algoritmo primal simplex
+
