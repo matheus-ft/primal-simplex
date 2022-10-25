@@ -26,6 +26,9 @@ class vector(np.ndarray):
     def index(self, value) -> int:
         return list(self).index(value)
 
+    def extend(self, other):
+        return vector(np.concatenate([self, other], axis=1))
+
 
 class matrix(np.ndarray):
     """2-dimensional numpy array representing a matrix.
@@ -60,9 +63,16 @@ class matrix(np.ndarray):
         m = [vector(self[:, j]) for j in columns]
         return matrix(m)
 
+    def extend(self, other):
+        return matrix(np.concatenate([self, other], axis=1))
+
 
 def zeros(shape: int | tuple[int, int]):
     return vector(np.zeros(shape))
+
+
+def ones(shape: int | tuple[int, int]):
+    return vector(np.ones(shape))
 
 
 def solve_system(A: matrix, b: vector):
