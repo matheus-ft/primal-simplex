@@ -3,7 +3,7 @@ import numpy as np
 
 
 def solve(c: ut.vector, b: ut.vector, A: ut.matrix, max_iterations=100):
-    feasible, basic_indexes, nonbasic_indexes = _find_base(c, b, A, max_iterations)
+    feasible, basic_indexes, nonbasic_indexes = _find_base(A, b)
     if not feasible:
         return "This problem is infeasible"
 
@@ -11,6 +11,7 @@ def solve(c: ut.vector, b: ut.vector, A: ut.matrix, max_iterations=100):
         success, x, z = _simplex(c, b, A, basic_indexes, nonbasic_indexes)
         if success:
             return x, z
+    raise Exception("Not enough iterations. Crank that number up, c'mon!")
 
 
 def _simplex(
@@ -67,27 +68,29 @@ def _simplex(
     return False, None, None
 
 
-def _find_base(
-    c_x: ut.vector, b_x: ut.vector, A_x: ut.matrix
-) -> tuple[bool, list[int], list[int]]:
-    A = A_x.copy()
-    b = b_x.copy()
+def _find_base(A: ut.matrix, b: ut.vector):
     m, n = A.shape
+
+    # making b >= 0
     for i in range(m):
         if b[i] < 0:
-            b[i] *= -1
+            b[i] *= -1  # this changes them inplace
             A[i] *= -1
-    y = 0
-    for j in range(n):
-        if c_x[j] == 0 and np.all(A[:, j] > 0):
-            continue
-        y += 1
-    I = np.identity(y)
-    A = A.extend(I)
-    c = ut.zeros(len(c_x)).extend(ut.ones(y))
-    basic_indexes = list(range(n, n + y))
+
+    # adding m artificial varibles
+    I = np.identity(m)
+    M = A.extended_by(I)
+    c = ut.zeros(n).extended_by(ut.ones(m))
+    basic_indexes = list(range(n, n + m))  # basis will be the identity I_{m}
     nonbasic_indexes = list(range(n))
-    _, _, w = _simplex(c, b, A, basic_indexes, nonbasic_indexes)
-    if w != 0:
-        return False, basic_indexes, nonbasic_indexes
-    return True, basic_indexes, nonbasic_indexes
+
+    # solving first phase
+    w = None
+    finished = False
+    while not finished:
+        finished, _, w = _simplex(c, b, M, basic_indexes, nonbasic_indexes)
+    feasible = w == 0  # True if all the artificial varibles come out of the basis
+    nonbasic_indexes = [
+        j for j in nonbasic_indexes if j < n
+    ]  # removing the artificial indexes
+    return feasible, basic_indexes, nonbasic_indexes

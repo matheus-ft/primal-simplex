@@ -23,11 +23,11 @@ class vector(np.ndarray):
         v = self[positions]
         return vector(v)
 
+    def extended_by(self, other):
+        return vector(np.concatenate([self, other]))
+
     def index(self, value) -> int:
         return list(self).index(value)
-
-    def extend(self, other):
-        return vector(np.concatenate([self, other], axis=1))
 
 
 class matrix(np.ndarray):
@@ -63,16 +63,20 @@ class matrix(np.ndarray):
         m = [vector(self[:, j]) for j in columns]
         return matrix(m)
 
-    def extend(self, other):
+    def extended_by(self, other):
         return matrix(np.concatenate([self, other], axis=1))
 
 
-def zeros(shape: int | tuple[int, int]):
+def zeros(shape: int | tuple):
     return vector(np.zeros(shape))
 
 
-def ones(shape: int | tuple[int, int]):
+def ones(shape: int | tuple):
     return vector(np.ones(shape))
+
+
+def identity(dimension: int):
+    return matrix(np.identity(dimension))
 
 
 def solve_system(A: matrix, b: vector):
