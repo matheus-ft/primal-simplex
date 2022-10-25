@@ -30,7 +30,7 @@ def _simplex(
         return True, x, f(x_B, c_x=c_B)
 
     def unlimited():
-        return True, None, "This problem has no finite solution"
+        return True, "This problem has no finite solution", -np.inf
 
     B = A(basic_indexes)
     N = A(nonbasic_indexes)
@@ -41,6 +41,7 @@ def _simplex(
 
     _lambda = ut.solve_system(B.T, c_B)
 
+    # transform non-basic costs into relative costs
     for j in range(len(c_N)):
         c_N[j] -= _lambda.T @ N[:, j]
 
@@ -54,10 +55,10 @@ def _simplex(
 
     if np.all(y <= 0):
         return unlimited()
-    epsilon = np.inf
-    p = k  # just an initialization
+    epsilon = np.inf  # just initializations
+    p = k
     for i in range(len(y)):
-        if y[i] <= 0:  # at least one won't trigger
+        if y[i] <= 0:  # garanteed that at least one won't trigger
             continue
         r = x_B[i] / y[i]
         if r < epsilon:
