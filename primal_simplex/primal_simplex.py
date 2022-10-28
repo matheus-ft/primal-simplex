@@ -11,15 +11,18 @@ def solve(
     c = ut.vector(c_input)
     b = ut.vector(b_input)
     A = ut.matrix(A_input)
+    solution = False
     feasible, basic_indexes, nonbasic_indexes = _find_base(A, b)
     if not feasible:
-        return "This problem is infeasible"
+        return solution, "This problem is infeasible", None
 
     for _ in range(max_iterations):
         success, x, z = _simplex(c, b, A, basic_indexes, nonbasic_indexes)
         if success:
-            return x, z
-    raise Exception("Not enough iterations. Crank that number up, c'mon!")
+            if z > -np.inf:
+                solution = True
+            return solution, x, z
+    return solution, "Not enough iterations. Crank that number up, c'mon!", None
 
 
 def _simplex(
