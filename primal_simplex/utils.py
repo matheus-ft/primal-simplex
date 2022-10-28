@@ -67,12 +67,12 @@ class matrix(np.ndarray):
         return matrix(np.concatenate([self, other], axis=1))
 
 
-def zeros(shape: int | tuple):
-    return vector(np.zeros(shape))
+def zeros(dimension: int):
+    return vector(np.zeros(dimension))
 
 
-def ones(shape: int | tuple):
-    return vector(np.ones(shape))
+def ones(dimension: int):
+    return vector(np.ones(dimension))
 
 
 def identity(dimension: int):

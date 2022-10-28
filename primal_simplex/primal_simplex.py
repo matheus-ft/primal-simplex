@@ -2,7 +2,15 @@ import primal_simplex.utils as ut
 import numpy as np
 
 
-def solve(c: ut.vector, b: ut.vector, A: ut.matrix, max_iterations=100):
+def solve(
+    c_input: list[float],
+    b_input: list[float],
+    A_input: list[list[float]],
+    max_iterations=100,
+):
+    c = ut.vector(c_input)
+    b = ut.vector(b_input)
+    A = ut.matrix(A_input)
     feasible, basic_indexes, nonbasic_indexes = _find_base(A, b)
     if not feasible:
         return "This problem is infeasible"
