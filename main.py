@@ -1,4 +1,4 @@
-import primal_simplex as pl
+from primal_simplex import primal_simplex as PL
 
 
 while True:
@@ -31,7 +31,8 @@ while True:
     )
     print("\n")
 
-    success, x, z = pl.solve(c, b, A, max_iterations)
+    pl = PL(c, b, A)
+    success, x, z = pl.solve(max_iterations)
     if success:
         print(
             f"The optimal solution is x = {[round(float(v), 2) for v in x]} with f(x) = {round(z, 2)}"
