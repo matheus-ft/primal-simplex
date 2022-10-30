@@ -1,4 +1,4 @@
-from primal_simplex import primal_simplex as PL
+from primal_simplex import linear_problem as PL
 
 
 def test(c, b, A, max_iterations=10):

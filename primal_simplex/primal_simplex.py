@@ -2,7 +2,7 @@ from . import utils as ut
 import numpy as np
 
 
-class primal_simplex:
+class linear_problem:
     def __init__(self, c: list[float], b: list[float], A: list[list[float]]) -> None:
         self._c = ut.vector(c)
         self._b = ut.vector(b)
@@ -58,7 +58,7 @@ class primal_simplex:
                 self._optimal_value = z
                 if z > -np.inf:
                     self._decision_var = x
-                    self._problem = f"The optimal solution is x = {[round(float(v), 2) for v in x]} with f(x) = {round(z, 2)}, found in {i+1} iterations"
+                    self._problem = f"The optimal solution is x* = {[round(float(v), 2) for v in x]} with f(x*) = {round(z, 2)}, found in {i+1} iterations"
                 else:
                     self._problem = "This problem has no finite solution."
                 return

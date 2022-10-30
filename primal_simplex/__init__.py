@@ -1,1 +1,1 @@
-from .primal_simplex import primal_simplex
+from .primal_simplex import linear_problem
