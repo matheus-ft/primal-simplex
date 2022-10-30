@@ -52,13 +52,13 @@ class primal_simplex:
             self._problem = "This problem is infeasible."
             return
 
-        for _ in range(max_iterations):
+        for i in range(max_iterations):
             success, x, z = self._simplex()
             if success:
                 self._optimal_value = z
                 if z > -np.inf:
                     self._decision_var = x
-                    self._problem = f"The optimal solution is x = {[round(float(v), 2) for v in x]} with f(x) = {round(z, 2)}"
+                    self._problem = f"The optimal solution is x = {[round(float(v), 2) for v in x]} with f(x) = {round(z, 2)}, found in {i+1} iterations"
                 else:
                     self._problem = "This problem has no finite solution."
                 return
