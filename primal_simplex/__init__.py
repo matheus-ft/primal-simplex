@@ -1,1 +1,1 @@
-from .primal_simplex import solve
+from .primal_simplex import primal_simplex

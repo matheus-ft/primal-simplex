@@ -1,108 +1,148 @@
-import primal_simplex.utils as ut
+from . import utils as ut
 import numpy as np
 
 
-def solve(
-    c_input: list[float],
-    b_input: list[float],
-    A_input: list[list[float]],
-    max_iterations=100,
-):
-    c = ut.vector(c_input)
-    b = ut.vector(b_input)
-    A = ut.matrix(A_input)
-    solution = False
-    feasible, basic_indexes, nonbasic_indexes = _find_base(A, b)
-    if not feasible:
-        return solution, "This problem is infeasible", None
+class primal_simplex:
+    def __init__(self, c: list[float], b: list[float], A: list[list[float]]) -> None:
+        self._c = ut.vector(c)
+        self._b = ut.vector(b)
+        self._A = ut.matrix(A)
+        self._problem: str = "This problem has not been solved yet."
 
-    for _ in range(max_iterations):
-        success, x, z = _simplex(c, b, A, basic_indexes, nonbasic_indexes)
-        if success:
-            if z > -np.inf:
-                solution = True
-            return solution, x, z
-    return solution, "Not enough iterations. Crank that number up, c'mon!", None
+    @property
+    def basic(self) -> list[int]:
+        return self._basic
 
+    @property
+    def nonbasic(self) -> list[int]:
+        return self._nonbasic
 
-def _simplex(
-    c: ut.vector,
-    b: ut.vector,
-    A: ut.matrix,
-    basic_indexes: list[int],
-    nonbasic_indexes: list[int],
-):
-    def f(x: ut.vector, c_x=c):
-        return float(c_x.T @ x)
+    @property
+    def decision_var(self) -> ut.vector | None:
+        return self._decision_var
 
-    def solution():
-        x = ut.zeros(len(c))
-        x[basic_indexes] = x_B
-        return True, x, f(x_B, c_x=c_B)
+    @property
+    def optimal_value(self) -> float | None:
+        return self._optimal_value
 
-    def unlimited():
-        return True, "This problem has no finite solution", -np.inf
+    @staticmethod
+    def f(x: ut.vector, c: ut.vector):
+        return float(c.T @ x)
 
-    B = A(basic_indexes)
-    N = A(nonbasic_indexes)
-    c_B = c(basic_indexes)
-    c_N = c(nonbasic_indexes)
+    @property
+    def c(self) -> ut.vector:
+        return self._c
 
-    x_B = ut.solve_system(B, b)
+    @property
+    def b(self) -> ut.vector:
+        return self._b
 
-    _lambda = ut.solve_system(B.T, c_B)
+    @property
+    def A(self) -> ut.matrix:
+        return self._A
 
-    # transform non-basic costs into relative costs
-    for j in range(len(c_N)):
-        c_N[j] -= _lambda.T @ N[:, j]
+    def __repr__(self) -> str:
+        return self._problem
 
-    c_Nk = min(c_N)
-    if c_Nk >= 0:
-        return solution()
-    k = c_N.index(c_Nk)
+    def solve(self, max_iterations=1000) -> None:
+        self._decision_var = None
+        self._optimal_value = np.inf
+        feasible = self._find_base()
+        if not feasible:
+            self._problem = "This problem is infeasible."
+            return
 
-    a_Nk = ut.vector(N[:, k])
-    y = ut.solve_system(B, a_Nk)
+        for _ in range(max_iterations):
+            success, x, z = self._simplex()
+            if success:
+                self._optimal_value = z
+                if z > -np.inf:
+                    self._decision_var = x
+                    self._problem = f"The optimal solution is x = {[round(float(v), 2) for v in x]} with f(x) = {round(z, 2)}"
+                else:
+                    self._problem = "This problem has no finite solution."
+                return
+        self._problem = f"{max_iterations} are not enough iterations."
+        return
 
-    if np.all(y <= 0):
-        return unlimited()
-    epsilon = np.inf  # just initializations
-    p = k
-    for i in range(len(y)):
-        if y[i] <= 0:  # garanteed that at least one won't trigger
-            continue
-        r = x_B[i] / y[i]
-        if r < epsilon:
-            epsilon = r
-            p = i
+    def _simplex(self) -> tuple[bool, ut.vector, float]:
+        done = True  # to make a tiny bit more readable
 
-    basic_indexes[p], nonbasic_indexes[k] = nonbasic_indexes[k], basic_indexes[p]
-    return False, None, None
+        def solution():
+            x = ut.zeros(len(self.c))
+            x[self.basic] = x_B
+            return done, x, self.f(x_B, c_B)
 
+        def unlimited():
+            return done, ut.inf(len(self.c), -1), -np.inf
 
-def _find_base(A: ut.matrix, b: ut.vector):
-    m, n = A.shape
+        # partitions
+        B = self.A(self.basic)
+        N = self.A(self.nonbasic)
+        c_B = self.c(self.basic)
+        c_N = self.c(self.nonbasic)
 
-    # making b >= 0
-    for i in range(m):
-        if b[i] < 0:
-            b[i] *= -1  # this changes them inplace
-            A[i] *= -1
+        x_B = ut.solve_system(B, self.b)  # basic solution
 
-    # adding m artificial varibles
-    I = np.identity(m)
-    M = A.extended_by(I)
-    c = ut.zeros(n).extended_by(ut.ones(m))
-    basic_indexes = list(range(n, n + m))  # basis will be the identity I_{m}
-    nonbasic_indexes = list(range(n))
+        _lambda = ut.solve_system(B.T, c_B)  # simplex multiplier
 
-    # solving first phase
-    w = None
-    finished = False
-    while not finished:
-        finished, _, w = _simplex(c, b, M, basic_indexes, nonbasic_indexes)
-    feasible = w == 0  # True if all the artificial varibles come out of the basis
-    nonbasic_indexes = [
-        j for j in nonbasic_indexes if j < n
-    ]  # removing the artificial indexes
-    return feasible, basic_indexes, nonbasic_indexes
+        # transform non-basic costs into relative costs
+        for j in range(len(c_N)):
+            c_N[j] -= _lambda.T @ N[:, j]
+
+        c_Nk = min(c_N)
+        if c_Nk >= 0:  # optimality test
+            return solution()
+        k = c_N.index(c_Nk)
+        nonbasic_k = self.nonbasic[k]  # index of the variable coming into the basis
+
+        a_Nk = ut.vector(N[:, k])
+        y = ut.solve_system(B, a_Nk)  # simplex direction
+
+        if np.all(y <= 0):
+            return unlimited()
+        epsilon, p = np.inf, k  # just initializations
+        for i in range(len(y)):
+            if y[i] <= 0:  # garanteed that at least one won't trigger
+                continue
+            r = x_B[i] / y[i]
+            if r < epsilon:
+                epsilon = r  # simplex step
+                p = i
+        basic_p = self.basic[p]  # index of the variable getting out of the basis
+
+        self._basic[p], self._nonbasic[k] = nonbasic_k, basic_p  # swap columns
+        return not done, ut.inf(len(self.c)), np.inf
+
+    def _find_base(self) -> bool:
+        m, n = self.A.shape
+
+        # making b >= 0
+        for i in range(m):
+            if self.b[i] < 0:
+                self._b[i] *= -1
+                self._A[i] *= -1
+
+        # to preserve the original data
+        self.oldA = self.A
+        self.old_costs = self.c
+
+        # adding m artificial varibles
+        I = np.identity(m)
+        self._A = self.A.extended_by(I)
+        self._c = ut.zeros(n).extended_by(ut.ones(m))
+        self._basic = list(range(n, n + m))  # first basis will be the identity I_{m}
+        self._nonbasic = list(range(n))
+
+        # solving first phase
+        w = None
+        finished = False
+        while not finished:
+            finished, _, w = self._simplex()
+        feasible = w == 0  # True if all the artificial varibles came out of the basis
+
+        # removing the artificial stuff
+        self._nonbasic = [j for j in self.nonbasic if j < n]
+        self._A = self.oldA
+        self._c = self.old_costs
+        return feasible
