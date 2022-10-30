@@ -75,6 +75,10 @@ def ones(dimension: int):
     return vector(np.ones(dimension))
 
 
+def inf(dimension: int, sign=1):
+    return vector(np.ones(dimension) * np.inf * sign)
+
+
 def identity(dimension: int):
     return matrix(np.identity(dimension))
 

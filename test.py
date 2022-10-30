@@ -1,15 +1,10 @@
 from primal_simplex import primal_simplex as PL
 
 
-def test(c, b, A):
+def test(c, b, A, max_iterations=10):
     pl = PL(c, b, A)
-    success, x, z = pl.solve()
-    if success:
-        print(
-            f"The optimal solution is x = {[round(float(v), 2) for v in x]} with f(x) = {round(z, 2)}"
-        )
-    else:
-        print(x)
+    pl.solve(max_iterations)
+    print(pl)
 
 
 c = [-1, 0, 0, 0, 0]
