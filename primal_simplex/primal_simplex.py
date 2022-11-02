@@ -45,6 +45,7 @@ class linear_problem:
         return self._problem
 
     def solve(self, max_iterations=1000) -> None:
+        max_iterations = max_iterations if max_iterations != 0 else 1000
         self._decision_var = None
         self._optimal_value = np.inf
         feasible = self._find_base()

@@ -26,15 +26,16 @@ while True:
         A = [[float(a) for a in input().split()] for _ in range(m)]
         print("]\n")
 
-    max_iterations = int(
-        input("Specify the maximum number of iterations (0 means the default 1000): ")
+    max_iterations = input(
+        "Specify the maximum number of iterations (0 means the default 1000): "
     )
+    try:
+        max_iterations = int(max_iterations)
+    except:
+        max_iterations = 0
 
     pl = PL(c, b, A)
-    if max_iterations > 0:
-        pl.solve(max_iterations)
-    else:
-        pl.solve()
+    pl.solve(max_iterations)
     print("\n", pl, "\n")
 
     more = (
@@ -45,3 +46,4 @@ while True:
 
     if not more:
         break
+    print("\n")
